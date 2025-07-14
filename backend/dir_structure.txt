@@ -1,0 +1,12 @@
+acadlink/
+├── acadlink/       ← Project settings, URLs
+│   ├── settings.py
+│   ├── urls.py
+├── core/           ← Main app for your models and logic
+│   ├── models.py
+│   ├── views.py
+│   ├── urls.py
+│   ├── forms.py
+├── templates/
+├── static/
+├── manage.py

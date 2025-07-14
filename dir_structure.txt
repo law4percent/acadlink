@@ -1,0 +1,35 @@
+acadlink/
+│
+├── backend/                  # Django backend project
+│   ├── acadlink/             # Django project config (settings, urls, etc.)
+│   │   ├── __init__.py
+│   │   ├── settings.py
+│   │   ├── urls.py
+│   │   └── wsgi.py
+│   │
+│   ├── apps/                 # Custom Django apps
+│   │   ├── accounts/         # e.g., user management app
+│   │   ├── courses/          # e.g., subject/course logic
+│   │   └── ...               # other feature modules
+│   │
+│   ├── media/                # Uploaded media files
+│   ├── static/               # Static files (e.g., logo, CSS)
+│   ├── manage.py             # Django CLI
+│   └── requirements.txt      # Python dependencies
+│
+├── frontend/                 # React frontend
+│   ├── public/               # Static HTML, favicon, etc.
+│   ├── src/                  # React source files
+│   │   ├── assets/           # Images, fonts
+│   │   ├── components/       # Reusable components
+│   │   ├── pages/            # Page-level components
+│   │   ├── services/         # API services to talk to Django
+│   │   ├── App.js
+│   │   └── index.js
+│   ├── .env                  # Environment variables
+│   ├── package.json          # React dependencies
+│   └── vite.config.js / webpack.config.js
+│
+├── .gitignore
+├── README.md
+└── docker-compose.yml        # Optional: for full-stack containerization

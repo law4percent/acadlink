@@ -1,0 +1,36 @@
+asgiref==3.9.1             # Used internally by Django to support ASGI (Asynchronous Server Gateway Interface),
+                           # enabling async views, WebSockets, and async middleware in Django 3.0+.
+
+Django==5.2.4              # The main web framework — used to create models, views, URLs, admin panels, migrations,
+                           # user authentication, and full server-side logic.
+
+psycopg2-binary==2.9.10    # PostgreSQL adapter for Python; allows Django to connect to a PostgreSQL database.
+                           # Used in DATABASES setting (settings.py) for storing and retrieving data.
+
+sqlparse==0.5.3            # Used by Django's internal database operations to format raw SQL statements nicely.
+                           # Required especially in admin interface and for SQL debugging.
+
+tzdata==2025.2             # Timezone database used by systems without system zoneinfo (mostly on Windows).
+                           # Helps Django handle timezone-aware datetimes properly.
+
+# --------------------------------------------
+# Additional recommended packages for real apps
+# --------------------------------------------
+
+djangorestframework==3.15.1  # Enables building RESTful APIs in Django using serializers, viewsets, routers, and
+                             # built-in authentication. Commonly imported in `INSTALLED_APPS` and used in `views.py`.
+
+django-cors-headers   # Allows cross-origin HTTP requests, essential when React (frontend) runs on a separate
+                             # server during development (like localhost:3000) and needs to talk to Django API.
+                             # Middleware is added in `settings.py`.
+
+python-decouple==3.8         # Used to manage settings/configs via a `.env` file instead of hardcoding sensitive values.
+                             # Used in `settings.py` to load `SECRET_KEY`, `DB_PASSWORD`, etc.
+
+gunicorn==21.2.0             # A WSGI HTTP server used for deploying Django apps in production (e.g., via Docker, Heroku).
+                             # Run your app like: `gunicorn acadlink.wsgi:application`.
+
+pillow==10.3.0               # Image processing library required by Django for handling uploaded images
+                             # (e.g., `ImageField` in models, image resizing, etc.)
+
+djangorestframework-simplejwt
