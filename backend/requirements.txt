@@ -34,3 +34,4 @@ pillow==10.3.0               # Image processing library required by Django for h
                              # (e.g., `ImageField` in models, image resizing, etc.)
 
 djangorestframework-simplejwt
+

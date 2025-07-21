@@ -43,8 +43,8 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     
     # Your apps
-    # 'apps.instructors',              # example custom app
-    'apps.accounts',               # another example
+    'apps.accounts',
+    'apps.instructors',
 
     # 3rd party apps
     'corsheaders',                # For React-Django CORS
@@ -54,7 +54,9 @@ INSTALLED_APPS = [
 ]
 
 # Custom User Model
-AUTH_USER_MODEL = 'accounts.User'
+AUTH_USER_MODEL = 'accounts.CustomUser'
+
+
 
 MIDDLEWARE = [
     'corsheaders.middleware.CorsMiddleware',  # Must be at top (before CommonMiddleware)
