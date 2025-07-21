@@ -1,5 +1,4 @@
 # accounts/serializers.py
-from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from rest_framework.exceptions import AuthenticationFailed
 from django.contrib.auth import authenticate, get_user_model
 from rest_framework import serializers
@@ -34,6 +33,17 @@ class UsernameOrEmailTokenObtainPairSerializer(serializers.Serializer):
         from rest_framework_simplejwt.tokens import RefreshToken
         refresh = RefreshToken.for_user(authenticated_user)
 
+        # Get full name
+        full_name = f"{authenticated_user.first_name} {authenticated_user.last_name}"
+
+        # Optionally add title if instructor
+        try:
+            if authenticated_user.role == UserRole.INSTRUCTOR:
+                instructor = Instructor.objects.get(user=authenticated_user)
+                full_name = f"{instructor.title} {full_name}"
+        except Instructor.DoesNotExist:
+            pass
+
         return {
             "refresh": str(refresh),
             "access": str(refresh.access_token),
@@ -42,8 +52,12 @@ class UsernameOrEmailTokenObtainPairSerializer(serializers.Serializer):
                 "username": authenticated_user.username,
                 "email": authenticated_user.email,
                 "role": authenticated_user.role,
+                "first_name": authenticated_user.first_name,
+                "last_name": authenticated_user.last_name,
+                "name": full_name  # 👈 This is what your frontend expects
             }
         }
+
 
 
 
