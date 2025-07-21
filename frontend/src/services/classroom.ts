@@ -1,26 +1,26 @@
-// frontend/src/services/classroom.ts
 import axios from "axios";
+import { getAuthHeaders, API_BASE_URL } from "./api";
 
-const API = import.meta.env.VITE_API_BASE_URL || "http://localhost:8000";
+const CLASSROOM_API = `${API_BASE_URL}/instructors/classrooms`;
 
-export const createClassroom = async (data: {
+export const createClassroom = (data: {
   name: string;
   start_year: number;
   end_year: number;
-}) => {
-  const token = localStorage.getItem("access");
-  return await axios.post(`${API}/api/instructors/classrooms/`, data, {
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
-  });
-};
+}) => axios.post(`${CLASSROOM_API}/`, data, getAuthHeaders());
 
-export const getInstructorClassrooms = async () => {
-  const token = localStorage.getItem("access");
-  return await axios.get(`${API}/api/instructors/classrooms/`, {
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
-  });
-};
+export const getInstructorClassrooms = () =>
+  axios.get(`${CLASSROOM_API}/`, getAuthHeaders());
+
+export const addSubjectToClassroom = (
+  classroomId: number,
+  subjectData: any
+) =>
+  axios.post(
+    `${CLASSROOM_API}/${classroomId}/subjects/`,
+    subjectData,
+    getAuthHeaders()
+  );
+
+export const getClassroomSubjects = (classroomId: number | string) =>
+  axios.get(`${CLASSROOM_API}/${classroomId}/subjects/`, getAuthHeaders());

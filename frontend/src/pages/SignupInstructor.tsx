@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import "bootstrap/dist/css/bootstrap.min.css";
-import { registerInstructor } from "../services/auth";
+import { registerInstructor } from "../services/authregister";
 
 const SignupInstructor: React.FC = () => {
   const navigate = useNavigate();

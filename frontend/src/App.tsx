@@ -1,4 +1,3 @@
-// src/App.tsx
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import Login from "./pages/Login";
 import SignupInstructor from "./pages/SignupInstructor";
@@ -18,13 +17,14 @@ function App() {
         <Route path="/signup-student" element={<SignupStudent />} />
         <Route path="/unauthorized" element={<Unauthorized />} />
 
-        {/* Protected Instructor Routes */}
+        {/* Protected Routes - Instructor */}
         <Route element={<ProtectedRoute allowedRoles={["instructor"]} />}>
           <Route path="/office" element={<Office />} />
-          <Route path="/classroom/:id" element={<Office />} />
+          {/* You can also create a ClassroomDetailInstructor component for this */}
+          <Route path="/office/classroom/:id" element={<Office />} />
         </Route>
 
-        {/* Protected Student Routes */}
+        {/* Protected Routes - Student */}
         <Route element={<ProtectedRoute allowedRoles={["student"]} />}>
           <Route path="/classroom" element={<Classroom />} />
           <Route path="/classroom/:id" element={<Classroom />} />

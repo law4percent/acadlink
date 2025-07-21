@@ -1,7 +1,7 @@
 // src/pages/Login.tsx
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { login } from "../services/auth";
+import { login } from "../services/authlogin";
 
 const Login: React.FC = () => {
   const [form, setForm] = useState({ identifier: "", password: "" });

@@ -3,40 +3,57 @@ import "bootstrap/dist/css/bootstrap.min.css";
 import "bootstrap-icons/font/bootstrap-icons.css";
 import { Modal, Button, Form, Dropdown } from "react-bootstrap";
 import { useNavigate } from "react-router-dom";
+import {
+  createClassroom,
+  getInstructorClassrooms,
+  addSubjectToClassroom,
+  getClassroomSubjects,
+} from "../services/classroom";
+import {
+  getRecentClassrooms,
+  getRecentSubjects,
+  saveRecentClassroom as apiSaveRecentClassroom,
+  saveRecentSubject as apiSaveRecentSubject,
+} from "../services/recent";
+import dayjs from "dayjs";
 
 type Classroom = {
-  id: string;
+  id: number;
   name: string;
   startYear: number;
   endYear: number;
   subjects: string[];
 };
 
+type RawClassroom = {
+  id: number;
+  name: string;
+  start_year: number;
+  end_year: number;
+};
+
+interface RecentClassroom {
+  id: number;
+  classroom: Classroom;
+  accessed_at: string;
+}
+
 const Office: React.FC = () => {
   const navigate = useNavigate();
-  const [classrooms, setClassrooms] = useState<Classroom[]>([
-    {
-      id: "classroom-a",
-      name: "Room A",
-      startYear: 2023,
-      endYear: 2024,
-      subjects: ["Math (1B)", "Science (1C)"],
-    },
-    {
-      id: "classroom-b",
-      name: "Room B",
-      startYear: 2024,
-      endYear: 2025,
-      subjects: ["History (3B)"],
-    },
-    {
-      id: "classroom-c",
-      name: "Room C",
-      startYear: 2025,
-      endYear: 2026,
-      subjects: [],
-    },
-  ]);
+  const formatSubject = (
+    name: string,
+    year: string | number,
+    section: string
+  ) => {
+    return `${name} (${year}${section})`;
+  };
+  const getClassLabel = (room: any) => {
+    const name = room.name || "Unnamed";
+    const startYear = room.startYear || "????";
+    const endYear = room.endYear || "????";
+    return `${name} (S.Y. ${startYear}–${endYear})`;
+  };
+  const [classrooms, setClassrooms] = useState<Classroom[]>([]);
   const [selectedClassroom, setSelectedClassroom] = useState<Classroom | null>(
     null
   );
@@ -49,55 +66,83 @@ const Office: React.FC = () => {
   const [startYear, setStartYear] = useState<number | "">("");
   const [endYear, setEndYear] = useState<number | "">("");
   const [isHomeView, setIsHomeView] = useState(true);
-  const [recentClassrooms, setRecentClassrooms] = useState<Classroom[]>([]);
-  const [recentSubjects, setRecentSubjects] = useState<string[]>([]);
-  useEffect(() => {
-    const storedClassrooms = JSON.parse(
-      localStorage.getItem("recentClassrooms") || "[]"
-    );
-    const storedSubjects = JSON.parse(
-      localStorage.getItem("recentSubjects") || "[]"
-    );
 
-    setRecentClassrooms(storedClassrooms);
-    setRecentSubjects(storedSubjects);
+  const [recentClassrooms, setRecentClassrooms] = useState<RecentClassroom[]>(
+    []
+  );
+  const fetchRecentClassrooms = async () => {
+    try {
+      const response = await getRecentClassrooms();
+      const transformed = response.data.map((item: any) => ({
+        id: item.id,
+        accessed_at: item.accessed_at,
+        classroom: {
+          id: item.classroom.id,
+          name: item.classroom.name,
+          startYear: item.classroom.start_year,
+          endYear: item.classroom.end_year,
+          subjects: [], // optionally fetch subjects here if needed
+        },
+      }));
+      setRecentClassrooms(transformed);
+    } catch (error) {
+      console.error("Failed to fetch recent classrooms", error);
+    }
+  };
+
+  useEffect(() => {
+    const fetchClassrooms = async () => {
+      try {
+        const res = await getInstructorClassrooms();
+
+        const transformed = await Promise.all(
+          res.data.map(async (cls: RawClassroom) => {
+            const subjectRes = await getClassroomSubjects(cls.id);
+            const formattedSubjects = subjectRes.data.map(
+              (s: any) => `${s.name} (${s.year_level}${s.section})`
+            );
+
+            return {
+              id: cls.id,
+              name: cls.name,
+              startYear: cls.start_year,
+              endYear: cls.end_year,
+              subjects: formattedSubjects,
+            };
+          })
+        );
+
+        setClassrooms(transformed);
+      } catch (error) {
+        console.error("Error loading classrooms with subjects:", error);
+      }
+    };
+
+    fetchRecentClassrooms();
+    fetchClassrooms();
   }, []);
 
   const user = JSON.parse(localStorage.getItem("user") || "{}");
 
   const saveRecentClassroom = (classroom: Classroom) => {
-    const existing = JSON.parse(
-      localStorage.getItem("recentClassrooms") || "[]"
+    apiSaveRecentClassroom(classroom.id).catch((err) =>
+      console.error("Failed to sync recent classroom to backend:", err)
     );
-    const updated = [
-      classroom,
-      ...existing.filter((c: Classroom) => c.id !== classroom.id),
-    ].slice(0, 3);
-    localStorage.setItem("recentClassrooms", JSON.stringify(updated));
   };
 
-  const saveRecentSubject = (subject: string) => {
-    const existing = JSON.parse(localStorage.getItem("recentSubjects") || "[]");
-    const updated = [
-      subject,
-      ...existing.filter((s: string) => s !== subject),
-    ].slice(0, 3);
-    localStorage.setItem("recentSubjects", JSON.stringify(updated));
+  const saveRecentSubject = (subject: string, classroomId?: number) => {
+    if (classroomId) {
+      apiSaveRecentSubject(classroomId, subject).catch(
+        (
+          err // error
+        ) => console.error("Failed to sync recent subject to backend:", err)
+      );
+    }
   };
 
   const handleHomeClick = () => {
     setSelectedClassroom(null);
     setIsHomeView(true);
-
-    const storedClassrooms = JSON.parse(
-      localStorage.getItem("recentClassrooms") || "[]"
-    );
-    const storedSubjects = JSON.parse(
-      localStorage.getItem("recentSubjects") || "[]"
-    );
-
-    setRecentClassrooms(storedClassrooms);
-    setRecentSubjects(storedSubjects);
   };
 
   const handleClassroomClick = (classroom: Classroom) => {
@@ -108,54 +153,79 @@ const Office: React.FC = () => {
 
   const handleCreateClassroom = () => setShowClassModal(true);
 
-  const handleSaveClassroom = () => {
+  const handleSaveClassroom = async () => {
     if (newClassName.trim() && startYear && endYear && startYear < endYear) {
-      const newId = `classroom-${Date.now()}`;
+      try {
+        const res = await createClassroom({
+          name: newClassName,
+          start_year: startYear,
+          end_year: endYear,
+        });
 
-      const newClassroom: Classroom = {
-        id: newId,
-        name: newClassName,
-        startYear,
-        endYear,
-        subjects: [],
-      };
+        const newClassroom = {
+          id: res.data.id,
+          name: res.data.name,
+          startYear: res.data.start_year,
+          endYear: res.data.end_year,
+          subjects: [],
+        };
 
-      setClassrooms([...classrooms, newClassroom]);
-      setSelectedClassroom(newClassroom);
-      setNewClassName("");
-      setStartYear("");
-      setEndYear("");
-      setShowClassModal(false);
+        setClassrooms([...classrooms, newClassroom]);
+        setSelectedClassroom(newClassroom);
+        setNewClassName("");
+        setStartYear("");
+        setEndYear("");
+        setShowClassModal(false);
+      } catch (error) {
+        console.error("Failed to create classroom:", error);
+        alert("Failed to create classroom.");
+      }
     }
   };
 
   const handleAddSubject = () => setShowSubjectModal(true);
 
-  const handleSaveSubject = () => {
+  const handleSaveSubject = async () => {
     if (
       newSubjectName.trim() &&
       selectedClassroom &&
       yearLevel &&
       section.trim()
     ) {
-      const subjectFullName = `${newSubjectName} (${yearLevel}${section})`;
+      const subjectPayload = {
+        name: newSubjectName,
+        year_level: yearLevel,
+        section: section,
+      };
 
-      const updated = classrooms.map((cls) =>
-        cls.id === selectedClassroom.id
-          ? { ...cls, subjects: [...cls.subjects, subjectFullName] }
-          : cls
-      );
+      try {
+        await addSubjectToClassroom(selectedClassroom.id, subjectPayload);
 
-      setClassrooms(updated);
+        const subjectFullName = formatSubject(
+          newSubjectName,
+          yearLevel,
+          section
+        );
 
-      // Update selected classroom reference
-      const updatedClass = updated.find((c) => c.id === selectedClassroom.id);
-      setSelectedClassroom(updatedClass || null);
+        const updated = classrooms.map((cls) =>
+          cls.id === selectedClassroom.id
+            ? { ...cls, subjects: [...cls.subjects, subjectFullName] }
+            : cls
+        );
 
-      setNewSubjectName("");
-      setYearLevel("");
-      setSection("");
-      setShowSubjectModal(false);
+        setClassrooms(updated);
+        const updatedClass = updated.find((c) => c.id === selectedClassroom.id);
+        setSelectedClassroom(updatedClass || null);
+
+        saveRecentSubject(subjectFullName);
+        setNewSubjectName("");
+        setYearLevel("");
+        setSection("");
+        setShowSubjectModal(false);
+      } catch (error) {
+        console.error("Failed to add subject:", error);
+        alert("Failed to add subject.");
+      }
     }
   };
 
@@ -166,12 +236,9 @@ const Office: React.FC = () => {
     window.location.href = "/login";
   };
 
-  const getClassLabel = (cls: Classroom) =>
-    `${cls.name} (S.Y. ${cls.startYear}–${cls.endYear})`;
-
-//   return (...);
-// };
-// export default Office;
+  //   return (...);
+  // };
+  // export default Office;
   return (
     <div className="d-flex vh-100">
       {/* Sidebar */}
@@ -211,9 +278,7 @@ const Office: React.FC = () => {
       {/* Main content */}
       <div className="flex-grow-1 bg-light p-4">
         <div className="d-flex justify-content-between align-items-center mb-4">
-          <h5 className="mb-0">
-            Welcome instructor {user?.name || "Remalyn"}!
-          </h5>
+          <h5 className="mb-0">Welcome {user?.name}!</h5>
 
           <div className="d-flex align-items-center gap-3">
             <i className="bi bi-bell-fill text-warning fs-5" />
@@ -244,41 +309,63 @@ const Office: React.FC = () => {
         >
           {isHomeView ? (
             <>
+              {/* Recently Open Classroom Section */}
               <div className="text-muted small mb-2">
                 Recently open classroom
               </div>
-              <div className="d-flex gap-3 mb-4">
-                {recentClassrooms.map((cls) => (
+              {recentClassrooms.length === 0 ? (
+                <p>No recent classrooms</p>
+              ) : (
+                recentClassrooms.map((item) => (
                   <div
-                    key={cls.id}
-                    className="border p-3 rounded bg-light flex-grow-1 text-center"
-                    style={{ minWidth: "180px", cursor: "pointer" }}
+                    key={item.id}
+                    className="border rounded p-2 mb-2 bg-light"
+                    style={{ cursor: "pointer" }}
                     onClick={() => {
-                      setSelectedClassroom(cls);
+                      setSelectedClassroom(item.classroom);
                       setIsHomeView(false);
+                      apiSaveRecentClassroom(item.classroom.id); // optionally re-save it
                     }}
                   >
-                    <strong>{cls.name}</strong>
-                    <div className="text-muted small">
-                      S.Y. {cls.startYear} - {cls.endYear}
+                    <div className="fw-bold">
+                      {getClassLabel(item.classroom)}
                     </div>
+                    <small className="text-muted">
+                      Last accessed:{" "}
+                      {dayjs(item.accessed_at).format("MMMM D, YYYY h:mm A")}
+                    </small>
                   </div>
-                ))}
-              </div>
+                ))
+              )}
 
               <hr />
 
+              {/* Recently Open Subject Section */}
               <div className="text-muted small mb-2">Recently open subject</div>
               <div className="d-flex flex-column gap-2">
-                {recentSubjects.map((subject, index) => (
-                  <div
-                    key={index}
-                    className="border p-3 rounded bg-light"
-                    style={{ cursor: "pointer" }}
-                  >
-                    {subject}
-                  </div>
-                ))}
+                {recentClassrooms.flatMap((room) =>
+                  room.classroom.subjects.map((subj, idx) => (
+                    <div
+                      key={`${room.classroom.id}-${idx}`}
+                      className="p-2 bg-light rounded shadow-sm border"
+                      style={{ cursor: "pointer" }}
+                      onClick={() => {
+                        handleClassroomClick(room.classroom);
+                        saveRecentSubject(subj, room.classroom.id);
+                        navigate(
+                          `/${room.classroom.id}/${subj
+                            .replace(/\s+/g, "-")
+                            .toLowerCase()}`
+                        );
+                      }}
+                    >
+                      <div>{subj}</div>
+                      <small className="text-muted">
+                        {getClassLabel(room.classroom)}
+                      </small>
+                    </div>
+                  ))
+                )}
               </div>
             </>
           ) : selectedClassroom ? (

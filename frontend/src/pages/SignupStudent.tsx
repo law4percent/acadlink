@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { registerStudent } from "../services/auth"; // use service function
+import { registerStudent } from "../services/authregister"; // use service function
 
 const SignupStudent: React.FC = () => {
   const navigate = useNavigate();
