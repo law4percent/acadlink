@@ -83,12 +83,21 @@ class RecentSubjectListCreate(generics.ListCreateAPIView):
     permission_classes = [permissions.IsAuthenticated]
 
     def get_queryset(self):
-        return RecentSubject.objects.filter(instructor=self.request.user)[:3]
+        return RecentSubject.objects.filter(instructor=self.request.user).order_by('-accessed_at')
+
 
     def perform_create(self, serializer):
-        obj, _ = RecentSubject.objects.update_or_create(
-            instructor=self.request.user,
-            classroom=serializer.validated_data['classroom'],
-            subject=serializer.validated_data['subject'],
-            defaults={}
+        instructor = self.request.user
+        classroom = serializer.validated_data['classroom']
+        subject = serializer.validated_data['subject']
+
+        # Create or update the recent subject entry
+        RecentSubject.objects.update_or_create(
+            instructor=instructor,
+            classroom=classroom,
+            subject=subject,
+            defaults={'accessed_at': timezone.now()}
         )
+
+
+

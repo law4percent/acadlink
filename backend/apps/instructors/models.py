@@ -42,7 +42,7 @@ class RecentClassroom(models.Model):
 class RecentSubject(models.Model):
     instructor = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
     classroom = models.ForeignKey("instructors.Classroom", on_delete=models.CASCADE)
-    subject = models.CharField(max_length=255)
+    subject = models.ForeignKey("instructors.Subject", on_delete=models.CASCADE)
     accessed_at = models.DateTimeField(auto_now=True)
 
     class Meta:

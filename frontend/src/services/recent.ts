@@ -1,3 +1,5 @@
+// services/recent.ts
+
 import axios from "axios";
 import { getAuthHeaders, API_BASE_URL } from "./api";
 
@@ -12,9 +14,13 @@ export const getRecentSubjects = () =>
 export const saveRecentClassroom = (classroomId: number) =>
   axios.post(`${RECENT_API}/classrooms/`, { classroom: classroomId }, getAuthHeaders());
 
-export const saveRecentSubject = (classroomId: number, subject: string) =>
+// Fixed: subjectId should be number, and payload key should be 'subject'
+export const saveRecentSubject = (classroomId: number, subjectId: number) =>
   axios.post(
     `${RECENT_API}/subjects/`,
-    { classroom: classroomId, subject },
+    { 
+      classroom: classroomId, 
+      subject: subjectId  // Changed from 'subjectId' to 'subject'
+    },
     getAuthHeaders()
   );
